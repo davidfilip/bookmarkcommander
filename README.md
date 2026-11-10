@@ -97,3 +97,7 @@ python3 tools/generate-icons.py
 ```
 
 The tests cover application logic; they do not replace checking layout, focus, scrolling, and Chrome integration in the loaded extension.
+
+## License
+
+[MIT](LICENSE) © 2026 David Filip.
