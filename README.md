@@ -2,8 +2,6 @@
 
 A keyboard-first Chrome bookmark manager inspired by Midnight Commander. Browse two folders side by side, search your bookmarks, and open links in new tabs.
 
-![Bookmark Commander icon](icons/icon-128.png)
-
 ## Install
 
 1. Download or clone this repository.
