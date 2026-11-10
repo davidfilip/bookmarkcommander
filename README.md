@@ -44,7 +44,7 @@ Press **/** and type in the search field at the bottom of the active pane. Resul
 
 Matching ignores case and spaces in the query. Exact substring matches rank first. Fuzzy matches allow a small number of skipped characters: for example, `ytube` matches `YouTube`. Letters scattered widely through an unrelated title are excluded. This is character matching, rather than typo correction or semantic search.
 
-While typing, **↑ / ↓**, **Page Up / Page Down**, and **Home / End** navigate results. **Enter** opens the selected result in a new tab. **Esc** restores your position before starting the search. The other pane remains independent.
+While typing, **↑ / ↓**, **Page Up / Page Down**, and **Home / End** navigate results and move focus out of the search field. Clicking a result also moves focus to the results, so **Delete** then removes the selected bookmark while keeping the search query. Press **/** or click the search field to edit the query again. **Enter** opens the selected result in a new tab. **Esc** restores your position before starting the search. The other pane remains independent.
 
 ## Remembered state
 

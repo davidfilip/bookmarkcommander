@@ -104,13 +104,13 @@ function fuzzyScore(query, text) {
 
 function startSearch() {
   const pane = panes[active];
-  if (pane.search) return;
+  if (pane.search) { render(true, false, true); return; }
   pane.search = {
     query: '', selectedId: entries(pane)[pane.selected]?.id, selected: pane.selected,
     scrollTop: panesElement.children[active].querySelector('.list')?.scrollTop || 0,
   };
   pane.selected = 0;
-  render(true);
+  render(true, true, true);
 }
 
 function stopSearch() {
@@ -152,7 +152,7 @@ function bookmarkIcon(item) {
   return icon;
 }
 
-function render(focus = false, revealSelection = focus) {
+function render(focus = false, revealSelection = focus, focusSearch = null) {
   const paneFocused = Boolean(document.activeElement?.closest?.('.pane'));
   const searchFocused = document.activeElement?.className === 'search-input';
   const cursor = searchFocused ? document.activeElement.selectionStart : null;
@@ -201,7 +201,7 @@ function render(focus = false, revealSelection = focus) {
       row.title = item.url || item.title;
       row.append(bookmarkIcon(item), element('span', 'title', item.title || item.url || 'Untitled'));
       row.append(element('span', 'detail', item.url ? hostname(item.url) : item.target ? 'Parent folder' : `${item.children?.length || 0} items`));
-      row.addEventListener('click', () => { active = i; pane.selected = index; render(true, false); });
+      row.addEventListener('click', () => { active = i; pane.selected = index; render(true, false, false); });
       row.addEventListener('dblclick', () => { active = i; pane.selected = index; openSelected(); });
       list.append(row);
     });
@@ -223,7 +223,7 @@ function render(focus = false, revealSelection = focus) {
     list.scrollTop = scrollPositions[i] || 0;
   });
   if (focus || searchFocused || paneFocused) {
-    const input = panesElement.children[active].querySelector('.search-input');
+    const input = (focusSearch ?? searchFocused) ? panesElement.children[active].querySelector('.search-input') : null;
     (input || panesElement.children[active]).focus({ preventScroll: true });
     if (input && cursor !== null) input.setSelectionRange(cursor, cursor);
     if (revealSelection) panesElement.children[active].querySelector('.selected')?.scrollIntoView({ block: 'nearest' });
@@ -329,12 +329,12 @@ function handleKeydown(event) {
     case 'Home': pane.selected = 0; break;
     case 'End': pane.selected = last; break;
     case 'Backspace': case 'ArrowLeft': event.preventDefault(); goUp(); return;
-    case 'Enter': case 'ArrowRight': event.preventDefault(); if (!event.repeat) openSelected(); return;
+    case 'Enter': case 'ArrowRight': event.preventDefault(); panesElement.children[active].focus({ preventScroll: true }); if (!event.repeat) openSelected(); return;
     case 'Delete': event.preventDefault(); if (!event.repeat) deleteSelected(); return;
     default: return;
   }
   event.preventDefault();
-  render(true);
+  render(true, true, false);
 }
 
 document.addEventListener('keydown', handleKeydown);

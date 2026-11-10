@@ -5,13 +5,25 @@ const vm = require('node:vm');
 
 function setup(storage = new Map()) {
   class Element {
-    constructor() { this.children = []; this.listeners = {}; }
-    append(...children) { this.children.push(...children); }
+    constructor() { this.children = []; this.listeners = {}; this.clientHeight = 212; this.offsetHeight = 20; this.scrollTop = 0; }
+    append(...children) { children.forEach(child => { child.parent = this; }); this.children.push(...children); }
     replaceChildren() { this.children = []; }
     setAttribute() {}
     addEventListener(name, callback) { this.listeners[name] = callback; }
-    focus() { this.focused = true; }
-    querySelector() { return null; }
+    focus() { this.focused = true; context.document.activeElement = this; }
+    setSelectionRange() {}
+    closest(selector) {
+      return this.className?.split(' ').includes(selector.slice(1)) ? this : this.parent?.closest(selector);
+    }
+    querySelector(selector) {
+      for (const child of this.children) {
+        if (child.className?.split(' ').includes(selector.slice(1))) return child;
+        const match = child.querySelector(selector);
+        if (match) return match;
+      }
+      return null;
+    }
+    scrollIntoView() {}
   }
   const elements = new Map();
   const opened = [];
@@ -232,6 +244,36 @@ test('bookmark refresh preserves keyboard focus in the active pane', () => {
     installTree(root, false);`);
   assert.equal(elements.get('#panes').children[1].focused, true);
   assert.equal(elements.get('#panes').children[0].focused, undefined);
+});
+
+test('search navigation and result clicks focus results so Delete removes the selection', async () => {
+  for (const action of ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', 'Tab', 'Enter', 'click']) {
+    const { run, elements } = setup();
+    run(`chrome.bookmarks = { remove: async id => { globalThis.removedId = id; } };
+      startSearch(); panes[0].search.query = 'example'; render(true);`);
+    assert.equal(run('document.activeElement.className'), 'search-input');
+    if (action === 'click') {
+      elements.get('#panes').children[0].querySelector('.row').listeners.click();
+    } else {
+      run(`handleKeydown({ target: document.activeElement, key: ${JSON.stringify(action)}, preventDefault() {} })`);
+    }
+    assert.equal(run('document.activeElement.className.includes("pane")'), true, action);
+    assert.equal(run('panes[0].search.query'), 'example');
+    if (action === 'Tab') run('active = 0; render(true)');
+    run(`handleKeydown({ target: document.activeElement, key: 'Delete', preventDefault() {} })`);
+    await run('Promise.resolve()');
+    assert.equal(run('removedId'), 'link', action);
+    assert.equal(run('document.activeElement.className.includes("pane")'), true);
+    run('startSearch()');
+    assert.equal(run('document.activeElement.className'), 'search-input');
+  }
+});
+
+test('Delete stays a text editing key while the search field is focused', () => {
+  const { run } = setup();
+  run(`startSearch(); handleKeydown({ target: document.activeElement, key: 'Delete',
+    preventDefault() { throw new Error('Delete should edit the query'); } });`);
+  assert.equal(run('nodes.has("link")'), true);
 });
 
 test('PageDown and PageUp navigate and scroll results while search input has focus', () => {
