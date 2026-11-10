@@ -30,6 +30,7 @@ Clicking selects an item without moving the list. Double-clicking opens it. Movi
 | Page Up / Page Down | Move by the number of rows that fit in the active pane |
 | Home / End | Select the first / last item |
 | Enter | Enter a folder or open a bookmark in a new tab |
+| b | Open the selected bookmark in a background tab without switching to it (outside the search field) |
 | → | Same as Enter when outside the search field |
 | Backspace / ← | Go to the parent folder when outside the search field |
 | Delete | Remove the selected bookmark from Chrome when outside the search field |

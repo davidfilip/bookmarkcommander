@@ -250,12 +250,13 @@ function goUp() {
   render(true);
 }
 
-function openSelected() {
+function openSelected(background = false) {
   const pane = panes[active];
   const item = entries(pane)[pane.selected];
   if (!item) return;
   message.textContent = '';
   if (!item.url) {
+    if (background) return;
     if (item.target) return goUp();
     pane.folder = item.id;
     pane.selected = 0;
@@ -267,7 +268,7 @@ function openSelected() {
     url = new URL(item.url);
     if (!['http:', 'https:', 'ftp:', 'file:'].includes(url.protocol)) throw new Error();
   } catch { message.textContent = 'This bookmark uses an unsupported URL. Only web, FTP and file links can be opened.'; return; }
-  chrome.tabs.create({ url: url.href }).catch(error => { message.textContent = error.message; });
+  chrome.tabs.create({ url: url.href, active: !background }).catch(error => { message.textContent = error.message; });
 }
 
 let deletingBookmark = false;
@@ -331,6 +332,7 @@ function handleKeydown(event) {
     case 'Backspace': case 'ArrowLeft': event.preventDefault(); goUp(); return;
     case 'Enter': case 'ArrowRight': event.preventDefault(); panesElement.children[active].focus({ preventScroll: true }); if (!event.repeat) openSelected(); return;
     case 'Delete': event.preventDefault(); if (!event.repeat) deleteSelected(); return;
+    case 'b': event.preventDefault(); if (!event.repeat) openSelected(true); return;
     default: return;
   }
   event.preventDefault();

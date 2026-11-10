@@ -72,9 +72,35 @@ test('opens a selected bookmark in a new tab and blocks bookmarklets', () => {
   run('openSelected(); panes[0].selected = 1; openSelected()');
   assert.equal(opened.length, 1);
   assert.equal(opened[0].url, 'https://example.com/');
+  assert.equal(opened[0].active, true);
   run('panes[0].selected = 2; openSelected()');
   assert.equal(opened.length, 1);
   assert.match(elements.get('#message').textContent, /unsupported URL/);
+});
+
+test('b opens a background tab without changing selection and ignores repeats, folders and search typing', () => {
+  const { run, opened } = setup();
+  const press = (extra = '') => run(`handleKeydown({ key: 'b', target: document.activeElement,
+    preventDefault() {}, ${extra} })`);
+  run('render(true)');
+  press();
+  assert.equal(run('panes[0].folder'), 'root');
+  assert.equal(opened.length, 0);
+  run('openSelected(); panes[0].selected = 1');
+  press();
+  assert.equal(opened.length, 1);
+  assert.equal(opened[0].url, 'https://example.com/');
+  assert.equal(opened[0].active, false);
+  assert.equal(run('panes[0].selected'), 1);
+  press('repeat: true');
+  press('ctrlKey: true');
+  run('startSearch()');
+  press();
+  assert.equal(opened.length, 1);
+  run('panesElement.children[active].focus()');
+  press();
+  assert.equal(opened.length, 2);
+  assert.equal(opened[1].active, false);
 });
 
 test('live refresh recovers when the current folder has been removed', () => {
