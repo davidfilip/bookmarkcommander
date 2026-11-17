@@ -268,7 +268,13 @@ function openSelected(background = false) {
     url = new URL(item.url);
     if (!['http:', 'https:', 'ftp:', 'file:'].includes(url.protocol)) throw new Error();
   } catch { message.textContent = 'This bookmark uses an unsupported URL. Only web, FTP and file links can be opened.'; return; }
-  chrome.tabs.create({ url: url.href, active: !background }).catch(error => { message.textContent = error.message; });
+  const options = { url: url.href, active: !background };
+  const opening = background
+    ? chrome.tabs.getCurrent().then(tab => chrome.tabs.create({
+      ...options, windowId: tab.windowId, index: tab.index + 1,
+    }))
+    : chrome.tabs.create(options);
+  opening.catch(error => { message.textContent = error.message; });
 }
 
 let deletingBookmark = false;

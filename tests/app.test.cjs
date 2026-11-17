@@ -36,7 +36,10 @@ function setup(storage = new Map()) {
       createElement: () => new Element(), addEventListener() {},
     },
     chrome: {
-      tabs: { create: options => { opened.push(options); return Promise.resolve({}); } },
+      tabs: {
+        getCurrent: async () => ({ windowId: 7, index: 3 }),
+        create: options => { opened.push(options); return Promise.resolve({}); },
+      },
       runtime: { getURL: path => `chrome-extension://test/${path}` },
     },
     localStorage: {
@@ -78,7 +81,7 @@ test('opens a selected bookmark in a new tab and blocks bookmarklets', () => {
   assert.match(elements.get('#message').textContent, /unsupported URL/);
 });
 
-test('b opens a background tab without changing selection and ignores repeats, folders and search typing', () => {
+test('b opens a background tab next to the extension without changing selection and ignores repeats, folders and search typing', async () => {
   const { run, opened } = setup();
   const press = (extra = '') => run(`handleKeydown({ key: 'b', target: document.activeElement,
     preventDefault() {}, ${extra} })`);
@@ -88,9 +91,12 @@ test('b opens a background tab without changing selection and ignores repeats, f
   assert.equal(opened.length, 0);
   run('openSelected(); panes[0].selected = 1');
   press();
+  await run('Promise.resolve()');
   assert.equal(opened.length, 1);
   assert.equal(opened[0].url, 'https://example.com/');
   assert.equal(opened[0].active, false);
+  assert.equal(opened[0].windowId, 7);
+  assert.equal(opened[0].index, 4);
   assert.equal(run('panes[0].selected'), 1);
   press('repeat: true');
   press('ctrlKey: true');
@@ -99,6 +105,7 @@ test('b opens a background tab without changing selection and ignores repeats, f
   assert.equal(opened.length, 1);
   run('panesElement.children[active].focus()');
   press();
+  await run('Promise.resolve()');
   assert.equal(opened.length, 2);
   assert.equal(opened[1].active, false);
 });
