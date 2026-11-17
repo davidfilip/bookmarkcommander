@@ -278,6 +278,26 @@ function openSelected(background = false) {
 }
 
 let deletingBookmark = false;
+let editingBookmark = false;
+
+async function editSelected() {
+  const item = entries(panes[active])[panes[active].selected];
+  if (!item?.url || editingBookmark) return;
+  editingBookmark = true;
+  message.textContent = '';
+  try {
+    const title = prompt('Edit bookmark caption:', item.title);
+    if (title === null || title === item.title) return;
+    await chrome.bookmarks.update(item.id, { title });
+    const current = nodes.get(item.id);
+    if (current) current.title = title;
+    render(true, false);
+  } catch (error) {
+    message.textContent = `Could not edit bookmark: ${error.message}`;
+  } finally {
+    editingBookmark = false;
+  }
+}
 
 async function deleteSelected() {
   const item = entries(panes[active])[panes[active].selected];
@@ -339,6 +359,7 @@ function handleKeydown(event) {
     case 'Enter': case 'ArrowRight': event.preventDefault(); panesElement.children[active].focus({ preventScroll: true }); if (!event.repeat) openSelected(); return;
     case 'Delete': event.preventDefault(); if (!event.repeat) deleteSelected(); return;
     case 'b': event.preventDefault(); if (!event.repeat) openSelected(true); return;
+    case 'i': event.preventDefault(); if (!event.repeat) editSelected(); return;
     default: return;
   }
   event.preventDefault();

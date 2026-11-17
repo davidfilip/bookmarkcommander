@@ -309,6 +309,44 @@ test('Delete stays a text editing key while the search field is focused', () => 
   assert.equal(run('nodes.has("link")'), true);
 });
 
+test('i edits the actual bookmark caption and refreshes both panes', async () => {
+  const { run, elements } = setup();
+  run(`chrome.bookmarks = { update: async (id, changes) => { globalThis.updated = { id, ...changes }; } };
+    globalThis.prompt = (label, title) => { globalThis.previousTitle = title; return 'New caption'; };
+    openSelected(); panes[0].selected = 1; panes[1].folder = 'folder'; render(true);
+    handleKeydown({key: 'i', target: document.activeElement, preventDefault() {}});`);
+  await run('Promise.resolve()');
+  assert.equal(run('previousTitle'), 'Example');
+  assert.equal(run('updated.id'), 'link');
+  assert.equal(run('updated.title'), 'New caption');
+  assert.equal(run('entries(panes[0])[1].title'), 'New caption');
+  assert.equal(run('entries(panes[1])[1].title'), 'New caption');
+  assert.equal(elements.get('#message').textContent, '');
+});
+
+test('caption editing handles cancel, folders, repeats, search typing and API errors', async () => {
+  const { run, elements } = setup();
+  run(`globalThis.prompt = () => { throw new Error('Unexpected prompt'); }`);
+  const previousMessage = elements.get('#message').textContent;
+  await run('editSelected()');
+  assert.equal(elements.get('#message').textContent, previousMessage);
+  run(`openSelected(); panes[0].selected = 1; render(true);
+    handleKeydown({key: 'i', repeat: true, target: document.activeElement, preventDefault() {}});
+    startSearch();
+    handleKeydown({key: 'i', target: document.activeElement, preventDefault() { throw new Error('Should type'); }});
+    stopSearch();
+    globalThis.prompt = () => null;
+    chrome.bookmarks = {update: async () => { throw new Error('Managed bookmark'); }};`);
+  await run('editSelected()');
+  assert.equal(run('nodes.get("link").title'), 'Example');
+  assert.equal(elements.get('#message').textContent, '');
+  run(`globalThis.prompt = () => 'Changed'`);
+  await run('editSelected()');
+  assert.match(elements.get('#message').textContent, /Could not edit bookmark: Managed bookmark/);
+  assert.equal(run('nodes.get("link").title'), 'Example');
+  assert.equal(run('editingBookmark'), false);
+});
+
 test('PageDown and PageUp navigate and scroll results while search input has focus', () => {
   const { run, elements } = setup();
   run(`installTree({id: 'root', title: 'Bookmarks', children:

@@ -34,6 +34,7 @@ Clicking selects an item without moving the list. Double-clicking opens it. Movi
 | → | Same as Enter when outside the search field |
 | Backspace / ← | Go to the parent folder when outside the search field |
 | Delete | Remove the selected bookmark from Chrome when outside the search field |
+| i | Edit the selected bookmark's caption (outside the search field); Enter saves, Cancel leaves it unchanged |
 | / | Start searching in the active pane |
 | Esc | Close search and return to the previous selection and scroll position |
 
